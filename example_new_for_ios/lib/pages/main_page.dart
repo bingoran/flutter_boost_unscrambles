@@ -5,14 +5,14 @@ import 'package:flutter_boost/flutter_boost.dart';
 class Model {
   Model(this.title, this.onTap);
 
-  String title;
-  VoidCallback onTap;
+  String? title;
+  VoidCallback? onTap;
 }
 
 class MainPage extends StatefulWidget {
-  final String data;
+  final String? data;
 
-  const MainPage({Key key, this.data}) : super(key: key);
+  const MainPage({Key? key, this.data}) : super(key: key);
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
 
   GlobalKey<ScaffoldState> key = GlobalKey();
 
-  VoidCallback removeListener;
+  VoidCallback? removeListener;
 
   ValueNotifier<bool> withContainer = ValueNotifier(false);
 
@@ -56,7 +56,7 @@ class _MainPageState extends State<MainPage> {
       Future.delayed(const Duration(seconds: 2), () {
         entry.remove();
       });
-      return;
+      return Future.value(0);
     });
   }
 
@@ -224,7 +224,7 @@ class _MainPageState extends State<MainPage> {
       child: CupertinoButton.filled(
         padding: const EdgeInsets.symmetric(vertical: 15),
         onPressed: model.onTap,
-        child: Text(model.title,
+        child: Text(model.title ?? "",
             style: const TextStyle(
                 fontSize: 20,
                 color: Colors.white,
@@ -255,11 +255,11 @@ class _MainPageState extends State<MainPage> {
             'with container',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          ValueListenableBuilder(
+          ValueListenableBuilder<bool>(
             valueListenable: withContainer,
-            builder: (BuildContext context, value, Widget child) {
+            builder: (BuildContext context, value, Widget? child) {
               return CupertinoSwitch(
-                  value: value,
+                  value: value ?? false,
                   onChanged: (newValue) {
                     withContainer.value = newValue;
                   });

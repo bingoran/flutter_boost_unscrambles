@@ -14,7 +14,9 @@ void main() {
 
   ///这里的CustomFlutterBinding调用务必不可缺少，用于控制Boost状态的resume和pause
   CustomFlutterBinding();
-  runApp(const MyApp());
+
+  final navKey = new GlobalKey<NavigatorState>();
+  runApp(MyApp(key: navKey,));
 }
 
 ///创建一个自定义的Binding，继承和with的关系如下，里面什么都不用写
@@ -22,7 +24,7 @@ class CustomFlutterBinding extends WidgetsFlutterBinding
     with BoostFlutterBinding {}
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({required Key key}) : super(key: key);
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -41,12 +43,13 @@ class _MyAppState extends State<MyApp> {
   /// 如果用MaterialPageRoute的话同理
 
   static Map<String, FlutterBoostRouteFactory> routerMap = {
+
     'mainPage': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
           settings: settings,
-          builder: (_) {
-            Map<String, Object> map = settings.arguments ?? {};
-            String data = map['data'] ?? '';
+          pageBuilder: (_, __, ___) {
+            Map params = (settings.arguments != null) ? settings.arguments as Map : {};
+            String data = params['data'] ?? '';
             return MainPage(
               data: data,
             );
@@ -54,37 +57,37 @@ class _MyAppState extends State<MyApp> {
     },
 
     'simplePage': (settings, uniqueId) {
-      Map<String, Object> map = settings.arguments ?? {};
-      String data = map['data'] ?? '';
-      return CupertinoPageRoute(
+      Map params = (settings.arguments != null) ? settings.arguments as Map : {};
+      String data = params['data'] ?? '';
+      return PageRouteBuilder<dynamic>(
         settings: settings,
-        builder: (_) => SimplePage(
+        pageBuilder: (_, __, ___) => SimplePage(
           data: data,
         ),
       );
     },
     'tab1': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
         settings: settings,
-        builder: (_) => const TabPage(
+         pageBuilder: (_, __, ___) => const TabPage(
           color: Colors.blue,
           title: 'Tab1',
         ),
       );
     },
     'tab2': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
         settings: settings,
-        builder: (_) => const TabPage(
+         pageBuilder: (_, __, ___) => const TabPage(
           color: Colors.red,
           title: 'Tab2',
         ),
       );
     },
     'tab3': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
         settings: settings,
-        builder: (_) => const TabPage(
+        pageBuilder: (_, __, ___) => const TabPage(
           color: Colors.orange,
           title: 'Tab3',
         ),
@@ -93,16 +96,16 @@ class _MyAppState extends State<MyApp> {
 
     ///生命周期例子页面
     'lifecyclePage': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
           settings: settings,
-          builder: (ctx) {
+           pageBuilder: (_, __, ___){
             return const LifecycleTestPage();
           });
     },
     'replacementPage': (settings, uniqueId) {
-      return CupertinoPageRoute(
+      return PageRouteBuilder<dynamic>(
           settings: settings,
-          builder: (ctx) {
+           pageBuilder: (_, __, ___) {
             return const ReplacementPage();
           });
     },
@@ -110,24 +113,14 @@ class _MyAppState extends State<MyApp> {
     ///透明弹窗页面
     'dialogPage': (settings, uniqueId) {
       return PageRouteBuilder<dynamic>(
-
           ///透明弹窗页面这个需要是false
           opaque: false,
-
           ///背景蒙版颜色
           barrierColor: Colors.black12,
           settings: settings,
           pageBuilder: (_, __, ___) => const DialogPage());
     },
   };
-
-  Route<dynamic> routeFactory(RouteSettings settings, String uniqueId) {
-    FlutterBoostRouteFactory func = routerMap[settings.name];
-    if (func == null) {
-      return null;
-    }
-    return func(settings, uniqueId);
-  }
 
   Widget appBuilder(Widget home) {
     return MaterialApp(
@@ -144,16 +137,20 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return FlutterBoostApp(
-      routeFactory,
+      (settings, uniqueId) {
+        FlutterBoostRouteFactory? func = routerMap[settings.name];
+        if (func == null) return null;
+        return func(settings, uniqueId);
+      },
       appBuilder: appBuilder,
     );
   }
 }
 
 class TabPage extends StatelessWidget {
-  final String title;
-  final Color color;
-  const TabPage({Key key, this.title, this.color}) : super(key: key);
+  final String? title;
+  final Color? color;
+  const TabPage({Key? key, this.title, this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

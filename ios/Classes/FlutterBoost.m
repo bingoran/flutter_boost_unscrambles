@@ -34,6 +34,7 @@
 @end
 
 @implementation FlutterBoost
+// flutter boost 初始化的地方
 - (void)setup:(UIApplication*)application
      delegate:(id<FlutterBoostDelegate>)delegate
      callback:(void (^)(FlutterEngine *engine))callback {
