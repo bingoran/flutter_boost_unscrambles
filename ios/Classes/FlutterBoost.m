@@ -42,13 +42,14 @@
   [self setup:application
      delegate:delegate
      callback:callback
-      options:FlutterBoostSetupOptions.createDefault];
+      options:FlutterBoostSetupOptions.createDefault];//FlutterBoostSetupOptions.createDefault 会默认初始化入口为main，初始化路由为/
 }
 
 - (void)setup:(UIApplication*)application delegate:(id<FlutterBoostDelegate>)delegate
                                           callback:(void (^)(FlutterEngine *engine))callback
                                            options:(FlutterBoostSetupOptions*)options {
   if ([delegate respondsToSelector:@selector(engine)]) {
+    // 如果delegate里实现了引擎，则使用代理里初始化的引擎
     self.engine = delegate.engine;
   } else {
     self.engine = [[FlutterEngine alloc ] initWithName:@"io.flutter" project:options.dartObject];
@@ -69,7 +70,8 @@
     if (options.warmUpEngine){
       [self warmUpEngine];
     }
-
+    
+    // 初始化插件，插件注册，会注册FlutterBoostPlugin插件
     Class clazz = NSClassFromString(@"GeneratedPluginRegistrant");
     SEL selector = NSSelectorFromString(@"registerWithRegistry:");
     if (clazz && selector && self.engine) {
@@ -85,7 +87,8 @@
       callback(self.engine);
     }
   };
-
+  
+  // 主线程调研引擎，开始执行
   if ([NSThread isMainThread]) {
     engineRun();
   } else {
@@ -93,7 +96,8 @@
       engineRun();
     });
   }
-
+  
+  // 注册前后台切换通知
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(applicationWillEnterForeground:)
                                                name:UIApplicationWillEnterForegroundNotification
@@ -129,8 +133,11 @@
 - (void)warmUpEngine {
   FlutterViewController* vc = [[FlutterViewController alloc] initWithEngine:self.engine
                                                                     nibName:nil bundle:nil];
+  //手动管理生命周期
+  //isAppearing 设置为 YES : 触发 viewWillAppear:;
   [vc beginAppearanceTransition:YES animated:NO];
   [vc endAppearanceTransition];
+  //isAppearing 设置为 NO : 触发 viewWillDisappear:;
   [vc beginAppearanceTransition:NO animated:NO];
   [vc endAppearanceTransition];
 }

@@ -28,8 +28,10 @@
 
 @interface FBFlutterViewContainer : FlutterViewController<FBFlutterContainer>
 @property (nonatomic,copy,readwrite) NSString *name;
+//是否禁用侧滑返回
 @property (nonatomic, strong) NSNumber *disablePopGesture;
 @property (nonatomic, strong) NSNumber *enableLeftPanBackGesture;
+// 防止surfaceUpdated方法被多次调用，导致屏幕闪烁
 @property (nonatomic, strong) NSNumber *enableSurfaceUpdatedYes;
 
 - (instancetype)init;

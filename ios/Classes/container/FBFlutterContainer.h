@@ -22,12 +22,18 @@
  * THE SOFTWARE.
  */
 #import <Foundation/Foundation.h>
-
+// 初始化Container协议
 @protocol FBFlutterContainer <NSObject>
+// 页面名
 - (NSString *)name;
+// 页面参数
 - (NSDictionary *)params;
+// 唯一标识
 - (NSString *)uniqueId;
+// 唯一标识id
 - (NSString *)uniqueIDString;
+// 是否透明
 - (BOOL)opaque;
+//
 - (void)setName:(NSString *)name uniqueId:(NSString *)uniqueId params:(NSDictionary *)params opaque:(BOOL) opaque;
 @end

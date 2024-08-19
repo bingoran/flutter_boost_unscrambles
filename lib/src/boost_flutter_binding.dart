@@ -8,6 +8,7 @@ import 'logger.dart';
 
 /// This class is to hook the Binding，to handle lifecycle events
 mixin BoostFlutterBinding on WidgetsFlutterBinding {
+  // app生命周期状态锁
   bool _appLifecycleStateLocked = true;
 
   @override

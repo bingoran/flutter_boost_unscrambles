@@ -120,6 +120,7 @@ _Pragma("clang diagnostic pop")
   return [self init];
 }
 
+// 页面初始化，主要的初始化方式
 - (void)setName:(NSString *)name
        uniqueId:(NSString *)uniqueId
          params:(NSDictionary *)params
@@ -213,6 +214,7 @@ _Pragma("clang diagnostic pop")
 
 - (void)viewDidLoad {
   // Ensure current view controller attach to Flutter engine
+  // 确保当前视图控制器连接到Flutter引擎
   [self attatchFlutterEngine];
 
   [super viewDidLoad];
@@ -220,7 +222,8 @@ _Pragma("clang diagnostic pop")
   if (self.opaque) {
     self.view.backgroundColor = UIColor.whiteColor;
   }
-
+  
+  // 当前View是否支持左滑返回
   if (self.enableLeftPanBackGesture) {
     _leftEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc]
         initWithTarget:self
@@ -286,7 +289,9 @@ _Pragma("clang diagnostic pop")
   [FB_PLUGIN containerWillAppear:self];
 
   // For new page we should attach flutter view in view will appear
+  //对于新页面，我们应该在视图出现时附加flutter视图
   // for better performance.
+  // 为更好的性能
   [self attatchFlutterEngine];
 
   [super bridge_viewWillAppear:animated];
@@ -295,6 +300,7 @@ _Pragma("clang diagnostic pop")
 
 - (void)viewDidAppear:(BOOL)animated {
   //Ensure flutter view is attached.
+  // 确保附带flutter视图
   [self attatchFlutterEngine];
 
   // 根据淘宝特价版日志证明，即使在UIViewController的viewDidAppear下，application也可能在inactive模式，此时如果提交渲染会导致GPU后台渲染而crash

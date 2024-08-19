@@ -38,6 +38,7 @@
 - (void)containerCreated:(id<FBFlutterContainer>)vc {
   [self.containerManager addContainer:vc forUniqueId:vc.uniqueIDString];
   if (self.containerManager.containerSize == 1) {
+    // 恢复
     [FBLifecycle resume];
   }
 }
@@ -91,13 +92,18 @@
   }
 }
 
+// 插件注册的时候调用
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>  *)registrar {
+  // 初始化
   FlutterBoostPlugin* plugin = [[FlutterBoostPlugin alloc] initWithMessenger:(registrar.messenger)];
   [registrar publish:plugin];
+  // 注册Native Router Api Channel
   FBNativeRouterApiSetup(registrar.messenger, plugin);
 }
 
+// 返回引擎注册的 FlutterBoostPlugin
 + (FlutterBoostPlugin* )getPlugin:(FlutterEngine*)engine{
+  // 插件在引擎初始化的时候已经注册好了，这里通过引擎可以直接拿到这个插件
   NSObject *published = [engine valuePublishedByPlugin:@"FlutterBoostPlugin"];
   if ([published isKindOfClass:[FlutterBoostPlugin class]]) {
     FlutterBoostPlugin *plugin = (FlutterBoostPlugin *)published;
@@ -106,11 +112,15 @@
   return nil;
 }
 
+// 插件初始化
 - (instancetype)initWithMessenger:(id<FlutterBinaryMessenger>)messenger {
   self = [super init];
   if (self) {
+    // 注册 native 和 flutter 通信的channel
     _flutterApi = [[FBFlutterRouterApi alloc] initWithBinaryMessenger:messenger];
+    // 容器消息管理器
     _containerManager= [FBFlutterContainerManager new];
+    // 监听注册器
     _listenersTable = [[NSMutableDictionary alloc] init];
   }
   return self;
@@ -187,6 +197,7 @@
 
   if (listeners == nil) return;
   for (FBEventListener listener in listeners) {
+    // 调用监听事件的对象
     listener(key,args);
   }
 }

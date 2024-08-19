@@ -26,11 +26,18 @@
 #import "FBFlutterContainer.h"
 
 @interface FBFlutterContainerManager : NSObject
+// 通过这个uniqueId作为唯一标识，存放FBFlutterContainer
 - (void)addContainer:(id<FBFlutterContainer>)container forUniqueId:(NSString *)uniqueId;
+// 通过这个uniqueId作为唯一标识，存放FBFlutterContainer；移除旧的，添加新的
 - (void)activeContainer:(id<FBFlutterContainer>)container forUniqueId:(NSString *)uniqueId;
+// 通过唯一标识，移除容器
 - (void)removeContainerByUniqueId:(NSString *)uniqueId;
+// 通过唯一标识返回FBFlutterContainer
 - (id<FBFlutterContainer>)findContainerByUniqueId:(NSString *)uniqueId;
+// 返回最顶层的FBFlutterContainer
 - (id<FBFlutterContainer>)getTopContainer;
+// 判断是否是最顶层的FBFlutterContainer
 - (BOOL)isTopContainer:(NSString *)uniqueId;
+// 返回所有container数量
 - (NSInteger)containerSize;
 @end

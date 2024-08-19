@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 @class FBFlutterContainer;
 @class FBFlutterPage;
 
+/**
+ * 公共参数类
+ */
 @interface FBCommonParams : NSObject
 + (instancetype)makeWithOpaque:(nullable NSNumber *)opaque
     key:(nullable NSString *)key
@@ -29,18 +32,24 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, nullable) NSDictionary<NSString *, id> * arguments;
 @end
 
+
+// FB栈info
 @interface FBStackInfo : NSObject
 + (instancetype)makeWithIds:(nullable NSArray<NSString *> *)ids
     containers:(nullable NSDictionary<NSString *, FBFlutterContainer *> *)containers;
+
 @property(nonatomic, strong, nullable) NSArray<NSString *> * ids;
 @property(nonatomic, strong, nullable) NSDictionary<NSString *, FBFlutterContainer *> * containers;
 @end
 
+
+// FB Flutter 容器类
 @interface FBFlutterContainer : NSObject
 + (instancetype)makeWithPages:(nullable NSArray<FBFlutterPage *> *)pages;
 @property(nonatomic, strong, nullable) NSArray<FBFlutterPage *> * pages;
 @end
 
+// FB flutter 页面
 @interface FBFlutterPage : NSObject
 + (instancetype)makeWithWithContainer:(nullable NSNumber *)withContainer
     pageName:(nullable NSString *)pageName
@@ -53,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 /// The codec used by FBNativeRouterApi.
+/// FB 通信编解码器，用于 FBNativeRouterApi
 NSObject<FlutterMessageCodec> *FBNativeRouterApiGetCodec(void);
 
 @protocol FBNativeRouterApi
@@ -68,6 +78,7 @@ NSObject<FlutterMessageCodec> *FBNativeRouterApiGetCodec(void);
 extern void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<FBNativeRouterApi> *_Nullable api);
 
 /// The codec used by FBFlutterRouterApi.
+/// FB 通信编解码器，用于 FBFlutterRouterApi
 NSObject<FlutterMessageCodec> *FBFlutterRouterApiGetCodec(void);
 
 @interface FBFlutterRouterApi : NSObject

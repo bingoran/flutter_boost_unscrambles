@@ -32,6 +32,7 @@ typedef void (^FBEventListener) (NSString *name, NSDictionary *arguments);
 typedef void (^FBVoidCallback)(void);
 
 @interface FlutterBoostPlugin : NSObject <FlutterPlugin>
+// 代理对象，flutter boost的代理对象，通常会实现一些native操作路由的一些功能
 @property (nonatomic, strong) id<FlutterBoostDelegate> delegate;
 @property(nonatomic, strong) FBFlutterRouterApi* flutterApi;
 
@@ -41,7 +42,8 @@ typedef void (^FBVoidCallback)(void);
 - (void)containerDisappeared:(id<FBFlutterContainer>)container;
 - (void)containerDestroyed:(id<FBFlutterContainer>)container;
 - (void)onBackSwipe;
-
+// 添加 Event 事件注册
 - (FBVoidCallback)addEventListener:(FBEventListener)listener forName:(NSString *)key;
+
 + (FlutterBoostPlugin* )getPlugin:(FlutterEngine*)engine ;
 @end

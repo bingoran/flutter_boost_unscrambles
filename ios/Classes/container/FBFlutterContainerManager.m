@@ -33,18 +33,22 @@
 @implementation FBFlutterContainerManager
 - (instancetype)init {
   if (self = [super init]) {
+     // 所有Container存放的容器
     _allContainers = [NSMutableDictionary dictionary];
+     // 活动的Container
     _activeContainers = [NSMutableArray new];
   }
 
   return self;
 }
 
+// 通过这个uniqueId作为唯一标识，存放FBFlutterContainer
 - (void)addContainer:(id<FBFlutterContainer>)container
          forUniqueId:(NSString *)uniqueId {
   self.allContainers[uniqueId] = container;
 }
 
+// 通过这个uniqueId作为唯一标识，存放FBFlutterContainer
 - (void)activeContainer:(id<FBFlutterContainer>)container
             forUniqueId:(NSString *)uniqueId {
   if (uniqueId == nil || container == nil) return;
@@ -54,18 +58,19 @@
   }
   [self.activeContainers addObject:container];
 }
-
+// 通过唯一标识，移除容器
 - (void)removeContainerByUniqueId:(NSString *)uniqueId {
   if (!uniqueId) return;
   id<FBFlutterContainer> container = self.allContainers[uniqueId];
   [self.allContainers removeObjectForKey:uniqueId];
   [self.activeContainers removeObject:container];
 }
-
+// 通过唯一标识返回FBFlutterContainer
 - (id<FBFlutterContainer>)findContainerByUniqueId:(NSString *)uniqueId {
   return self.allContainers[uniqueId];
 }
 
+// 返回最顶层的FBFlutterContainer
 - (id<FBFlutterContainer>)getTopContainer {
   if (self.activeContainers.count) {
     return self.activeContainers.lastObject;
@@ -73,6 +78,7 @@
   return nil;
 }
 
+// 判断是否是最顶层的FBFlutterContainer
 - (BOOL)isTopContainer:(NSString *)uniqueId {
   id<FBFlutterContainer> top = [self getTopContainer];
   if (top != nil && [top.uniqueIDString isEqualToString:uniqueId]) {
@@ -81,6 +87,7 @@
   return NO;
 }
 
+// 返回所有container数量
 - (NSInteger)containerSize {
   return self.allContainers.count;
 }

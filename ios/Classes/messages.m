@@ -39,16 +39,19 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 + (nullable FBCommonParams *)nullableFromMap:(NSDictionary *)dict;
 - (NSDictionary *)toMap;
 @end
+
 @interface FBStackInfo ()
 + (FBStackInfo *)fromMap:(NSDictionary *)dict;
 + (nullable FBStackInfo *)nullableFromMap:(NSDictionary *)dict;
 - (NSDictionary *)toMap;
 @end
+
 @interface FBFlutterContainer ()
 + (FBFlutterContainer *)fromMap:(NSDictionary *)dict;
 + (nullable FBFlutterContainer *)nullableFromMap:(NSDictionary *)dict;
 - (NSDictionary *)toMap;
 @end
+
 @interface FBFlutterPage ()
 + (FBFlutterPage *)fromMap:(NSDictionary *)dict;
 + (nullable FBFlutterPage *)nullableFromMap:(NSDictionary *)dict;
@@ -56,6 +59,7 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 @end
 
 @implementation FBCommonParams
+//通用初始化类方法
 + (instancetype)makeWithOpaque:(nullable NSNumber *)opaque
     key:(nullable NSString *)key
     pageName:(nullable NSString *)pageName
@@ -69,6 +73,8 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
   pigeonResult.arguments = arguments;
   return pigeonResult;
 }
+
+//通过传入map初始化类方法
 + (FBCommonParams *)fromMap:(NSDictionary *)dict {
   FBCommonParams *pigeonResult = [[FBCommonParams alloc] init];
   pigeonResult.opaque = GetNullableObject(dict, @"opaque");
@@ -78,7 +84,10 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
   pigeonResult.arguments = GetNullableObject(dict, @"arguments");
   return pigeonResult;
 }
+
 + (nullable FBCommonParams *)nullableFromMap:(NSDictionary *)dict { return (dict) ? [FBCommonParams fromMap:dict] : nil; }
+
+// 反序列化方法
 - (NSDictionary *)toMap {
   return @{
     @"opaque" : (self.opaque ?: [NSNull null]),
@@ -88,9 +97,15 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
     @"arguments" : (self.arguments ?: [NSNull null]),
   };
 }
+
 @end
 
+
+/**
+ * FB 栈信息类
+ */
 @implementation FBStackInfo
+// 初始化
 + (instancetype)makeWithIds:(nullable NSArray<NSString *> *)ids
     containers:(nullable NSDictionary<NSString *, FBFlutterContainer *> *)containers {
   FBStackInfo* pigeonResult = [[FBStackInfo alloc] init];
@@ -98,6 +113,7 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
   pigeonResult.containers = containers;
   return pigeonResult;
 }
+
 + (FBStackInfo *)fromMap:(NSDictionary *)dict {
   FBStackInfo *pigeonResult = [[FBStackInfo alloc] init];
   pigeonResult.ids = GetNullableObject(dict, @"ids");
@@ -113,6 +129,9 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 }
 @end
 
+/**
+ * FB flutter 容器类
+ */
 @implementation FBFlutterContainer
 + (instancetype)makeWithPages:(nullable NSArray<FBFlutterPage *> *)pages {
   FBFlutterContainer* pigeonResult = [[FBFlutterContainer alloc] init];
@@ -132,6 +151,9 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 }
 @end
 
+/**
+ * flutter 页面page类
+ */
 @implementation FBFlutterPage
 + (instancetype)makeWithWithContainer:(nullable NSNumber *)withContainer
     pageName:(nullable NSString *)pageName
@@ -163,6 +185,8 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 }
 @end
 
+
+// FB Native Router 数据读取器
 @interface FBNativeRouterApiCodecReader : FlutterStandardReader
 @end
 @implementation FBNativeRouterApiCodecReader
@@ -188,6 +212,7 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 }
 @end
 
+// 数据写入器
 @interface FBNativeRouterApiCodecWriter : FlutterStandardWriter
 @end
 @implementation FBNativeRouterApiCodecWriter
@@ -218,14 +243,19 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 @interface FBNativeRouterApiCodecReaderWriter : FlutterStandardReaderWriter
 @end
 @implementation FBNativeRouterApiCodecReaderWriter
+//数据写入器
 - (FlutterStandardWriter *)writerWithData:(NSMutableData *)data {
   return [[FBNativeRouterApiCodecWriter alloc] initWithData:data];
 }
+//数据读取器
 - (FlutterStandardReader *)readerWithData:(NSData *)data {
   return [[FBNativeRouterApiCodecReader alloc] initWithData:data];
 }
 @end
 
+/**
+ * Flutter 编解码器初始化
+ */
 NSObject<FlutterMessageCodec> *FBNativeRouterApiGetCodec() {
   static dispatch_once_t sPred = 0;
   static FlutterStandardMessageCodec *sSharedObject = nil;
@@ -237,6 +267,11 @@ NSObject<FlutterMessageCodec> *FBNativeRouterApiGetCodec() {
 }
 
 
+/**
+ * api 传入的是plugin，是因为plugin实现了FBNativeRouterApi协议
+ * flutter 侧送的channel事件，native侧接收处理
+ * binaryMessenger 是flutter engin 里取的
+ */
 void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<FBNativeRouterApi> *api) {
   {
     FlutterBasicMessageChannel *channel =
@@ -247,6 +282,7 @@ void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
     if (api) {
       NSCAssert([api respondsToSelector:@selector(pushNativeRouteParam:error:)], @"FBNativeRouterApi api (%@) doesn't respond to @selector(pushNativeRouteParam:error:)", api);
       [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        // 接收消息
         NSArray *args = message;
         FBCommonParams *arg_param = GetNullableObjectAtIndex(args, 0);
         FlutterError *error;
@@ -357,6 +393,8 @@ void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
     }
   }
 }
+
+//FB Flutter Router 解码器
 @interface FBFlutterRouterApiCodecReader : FlutterStandardReader
 @end
 @implementation FBFlutterRouterApiCodecReader
@@ -373,6 +411,7 @@ void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
 }
 @end
 
+//FB Flutter Router 编码器
 @interface FBFlutterRouterApiCodecWriter : FlutterStandardWriter
 @end
 @implementation FBFlutterRouterApiCodecWriter
@@ -388,6 +427,7 @@ void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
 }
 @end
 
+//FB Flutter Router编码解码器
 @interface FBFlutterRouterApiCodecReaderWriter : FlutterStandardReaderWriter
 @end
 @implementation FBFlutterRouterApiCodecReaderWriter
@@ -399,6 +439,7 @@ void FBNativeRouterApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject
 }
 @end
 
+// FB Flutter Router编解码器初始化
 NSObject<FlutterMessageCodec> *FBFlutterRouterApiGetCodec() {
   static dispatch_once_t sPred = 0;
   static FlutterStandardMessageCodec *sSharedObject = nil;
@@ -410,6 +451,9 @@ NSObject<FlutterMessageCodec> *FBFlutterRouterApiGetCodec() {
 }
 
 
+/**
+ * native 侧给 flutter 侧发生channel事件
+ */
 @interface FBFlutterRouterApi ()
 @property (nonatomic, strong) NSObject<FlutterBinaryMessenger> *binaryMessenger;
 @end
