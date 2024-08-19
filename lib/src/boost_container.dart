@@ -24,6 +24,7 @@ class BoostContainer extends ChangeNotifier {
   }
 
   /// The local key
+  /// key
   final LocalKey? key;
 
   /// The pageInfo for this container
