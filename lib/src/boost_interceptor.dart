@@ -60,6 +60,7 @@ class PushInterceptorHandler extends _BaseHandler {
 }
 
 ///The Interceptor to intercept the [push] method in [BoostNavigator]
+///拦截器用于拦截 [BoostNavigator] 中的 [push] 方法
 class BoostInterceptor {
   /// The callback will be executed before the push is initiated.
   ///

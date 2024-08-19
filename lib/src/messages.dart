@@ -126,6 +126,7 @@ class FlutterPage {
   }
 }
 
+// Native Router Api 编解码器
 class _NativeRouterApiCodec extends StandardMessageCodec {
   const _NativeRouterApiCodec();
   @override
@@ -145,8 +146,7 @@ class _NativeRouterApiCodec extends StandardMessageCodec {
     if (value is StackInfo) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    } else 
-{
+    } else {
       super.writeValue(buffer, value);
     }
   }
@@ -320,6 +320,7 @@ class NativeRouterApi {
   }
 }
 
+// Flutter Router Api 编解码器
 class _FlutterRouterApiCodec extends StandardMessageCodec {
   const _FlutterRouterApiCodec();
   @override
@@ -327,8 +328,7 @@ class _FlutterRouterApiCodec extends StandardMessageCodec {
     if (value is CommonParams) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else 
-{
+    } else {
       super.writeValue(buffer, value);
     }
   }

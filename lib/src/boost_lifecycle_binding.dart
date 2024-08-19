@@ -30,13 +30,15 @@ mixin BoostLifecycleObserver {
   void onAppDidEnterBackground(BoostContainer container) {}
 }
 
+// boost 什么周期绑定
 class BoostLifecycleBinding {
   BoostLifecycleBinding._();
 
   static final BoostLifecycleBinding instance = BoostLifecycleBinding._();
-
+  
+  // 观察列表页
   final List<BoostLifecycleObserver> _observerList = <BoostLifecycleObserver>[];
-
+  // navigator 观察列表
   List<NavigatorObserver> navigatorObserverList = <NavigatorObserver>[];
 
   /// This set contains all of the ids that has been shown.
@@ -44,6 +46,9 @@ class BoostLifecycleBinding {
   /// callback event when showing on screen first time.
   /// Because it is not be added to [PageVisibilityBinding] before
   /// dispatching [containerDidShow] event
+  /// 这个集合包含了所有已显示的 ID。
+  /// 它用于解决当页面第一次显示在屏幕上时无法接收 onPageShow 回调事件的问题。
+  /// 因为在分发 [containerDidShow] 事件之前，它尚未被添加到 [PageVisibilityBinding]。
   final Set<String> _hasShownPageIds = <String>{};
 
   int getShownPageSize() {
@@ -69,6 +74,7 @@ class BoostLifecycleBinding {
   void containerDidPush(
       BoostContainer container, BoostContainer? previousContainer) {
     Logger.log('boost_lifecycle: BoostLifecycleBinding.containerDidPush');
+    //
     PageVisibilityBinding.instance
         .dispatchPagePushEvent(container.topPage.route);
     if (_observerList.isNotEmpty) {

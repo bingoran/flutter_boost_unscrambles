@@ -32,6 +32,10 @@ class BoostChannel {
   /// the events from native side
   ///
   /// The [VoldCallBack] is to remove this listener
+  /// 在 Flutter 端添加事件监听器，用于监听
+  /// 来自native端的事件
+  ///
+  /// [VoldCallBack] 用于移除此监听器
   VoidCallback addEventListener(String key, EventListener listener) {
     assert(
         _appState != null, 'Please check if the engine has been initialized!');

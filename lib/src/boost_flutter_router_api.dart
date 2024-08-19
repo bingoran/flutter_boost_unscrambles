@@ -7,6 +7,7 @@ import 'flutter_boost_app.dart';
 import 'messages.dart';
 
 /// The MessageChannel counterpart on the Dart side.
+/// 在Dart端对应的MessageChannel
 class BoostFlutterRouterApi extends FlutterRouterApi {
   factory BoostFlutterRouterApi(FlutterBoostAppState appState) {
     if (_instance == null) {
@@ -22,6 +23,7 @@ class BoostFlutterRouterApi extends FlutterRouterApi {
   static BoostFlutterRouterApi? _instance;
 
   /// Whether the dart env is ready to receive messages from host.
+  /// Dart 环境是否准备好接收来自native的消息
   bool isEnvReady = false;
 
   @override

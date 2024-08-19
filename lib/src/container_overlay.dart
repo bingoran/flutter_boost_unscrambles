@@ -14,17 +14,22 @@ import 'logger.dart';
 final GlobalKey<OverlayState> overlayKey = GlobalKey<OverlayState>();
 
 /// The Entry refresh mode, which indicates different situation
+/// boost 实例刷新模式
 enum BoostSpecificEntryRefreshMode {
   ///Just add an new entry
+  ///添加
   add,
 
   ///remove a specific entry from entries list
+  ///移除
   remove,
 
   ///move an existing entry to top
+  ///移动最在的entry到顶部
   moveToTop,
 }
 
+// 实体类
 class ContainerOverlayEntry extends OverlayEntry {
   ContainerOverlayEntry(BoostContainer container)
       : containerUniqueId = container.pageInfo.uniqueId,
@@ -34,6 +39,7 @@ class ContainerOverlayEntry extends OverlayEntry {
             maintainState: true);
 
   /// This overlay's id, which is the same as the it's related container
+  /// 这是 overlay id，与相关容器相同
   final String? containerUniqueId;
 
   @override
@@ -43,6 +49,7 @@ class ContainerOverlayEntry extends OverlayEntry {
 }
 
 /// Creates a [ContainerOverlayEntry] for the given [BoostContainer].
+/// 为给定的[BoostContainer]创建一个[ContainerOverlayEntry]
 typedef ContainerOverlayEntryFactory = ContainerOverlayEntry Function(
     BoostContainer container);
 
@@ -50,12 +57,14 @@ class ContainerOverlay {
   ContainerOverlay._();
 
   static final ContainerOverlay instance = ContainerOverlay._();
-
+  
+  // 保存添加的ContainerOverlayEntry
   final List<ContainerOverlayEntry> _lastEntries = <ContainerOverlayEntry>[];
 
   static ContainerOverlayEntryFactory? _overlayEntryFactory;
 
   /// Sets a custom [ContainerOverlayEntryFactory].
+  /// 设置自定义的[ContainerOverlayEntryFactory]
   static set overlayEntryFactory(ContainerOverlayEntryFactory entryFactory) {
     _overlayEntryFactory = entryFactory;
   }
@@ -66,14 +75,18 @@ class ContainerOverlay {
   }
 
   ///Refresh an specific entry instead of all of entries to enhance the performace
+  ///刷新特定的条目而不是所有条目，以提高性能
   ///
-  ///[container] : The container you want to operate, it is related with
-  ///              internal [OverlayEntry]
+  ///[container] : The container you want to operate, it is related with internal [OverlayEntry]
+  ///[container]：您想要操作的容器，它与内部的 [OverlayEntry] 相关
   ///[mode] : The [BoostSpecificEntryRefreshMode] you want to choose
+  ///[mode]：您想要选择的 [BoostSpecificEntryRefreshMode]
   void refreshSpecificOverlayEntries(
       BoostContainer container, BoostSpecificEntryRefreshMode mode) {
     // The |overlayState| is null if there is no widget in the tree
     // that matches this global key.
+    //如果树中没有widget，则|overlayState|为null
+    //匹配全局键。
     final overlayState = overlayKey.currentState;
     if (overlayState == null) {
       Logger.error('Oops, Failed to update overlay. mode=$mode, $container');
@@ -81,9 +94,11 @@ class ContainerOverlay {
     }
 
     //deal with different situation
+    //处理不同情况
     switch (mode) {
       case BoostSpecificEntryRefreshMode.add:
         // If there is an existing ContainerOverlayEntry in the list,we do nothing
+        //如果列表中已经存在ContainerOverlayEntry，我们什么都不做
         final ContainerOverlayEntry? existingEntry =
             _findExistingEntry(container: container);
         if (existingEntry != null) {
@@ -91,6 +106,7 @@ class ContainerOverlay {
         }
 
         // There is no existing entry in List.We can add an new Entry to list
+        // list中不存在实体，添加
         final entry = overlayEntryFactory(container);
         _lastEntries.add(entry);
         overlayState.insert(entry);
@@ -134,6 +150,8 @@ class ContainerOverlay {
 
   /// Return the result whether we can find a [ContainerOverlayEntry] matching this [container]
   /// If no entry matches this id,return null
+  ///返回结果是否可以找到与[container]匹配的[ContainerOverlayEntry]
+  ///如果没有匹配此id的条目，则返回null
   ContainerOverlayEntry? _findExistingEntry(
       {required BoostContainer container}) {
     return _lastEntries.singleWhereOrNull(

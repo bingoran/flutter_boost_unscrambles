@@ -6,6 +6,7 @@ import 'dart:collection';
 
 /// The operation queue for flutter boost to store operation and execute the opeation
 /// This queue is to solve issue:https://github.com/alibaba/flutter_boost/issues/1414
+/// boost 的等待对列
 class BoostOperationQueue {
   static BoostOperationQueue instance = BoostOperationQueue._();
 

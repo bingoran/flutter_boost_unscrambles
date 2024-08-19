@@ -30,11 +30,13 @@ class FlutterBoostApp extends StatefulWidget {
     String? initialRoute,
 
     ///interceptors is to intercept push operation now
+    /// 拦截器：拦截push操作
     List<BoostInterceptor>? interceptors,
   })  : appBuilder = appBuilder ?? _defaultAppBuilder,
-        interceptors = interceptors ?? <BoostInterceptor>[],
-        initialRoute = initialRoute ?? '/',
+        interceptors = interceptors ?? <BoostInterceptor>[], // boost 拦截器
+        initialRoute = initialRoute ?? '/', // 初始化路由
         super(key: key) {
+    // 根据页面router工厂，返回对应的页面
     BoostNavigator.instance.routeFactory = routeFactory;
   }
 
@@ -45,8 +47,10 @@ class FlutterBoostApp extends StatefulWidget {
   final List<BoostInterceptor> interceptors;
 
   /// default builder for app
+  /// 默认app builder
   static Widget _defaultAppBuilder(Widget home) {
     /// use builder param instead of home,to avoid Navigator.pop
+    /// 使用构造器参数（builder param）代替 home，以避免 Navigator.pop
     return MaterialApp(home: home, builder: (_, __) => home);
   }
 
@@ -55,58 +59,73 @@ class FlutterBoostApp extends StatefulWidget {
 }
 
 class FlutterBoostAppState extends State<FlutterBoostApp> {
+  // APP 生命周期改变key
   static const String _appLifecycleChangedKey = "app_lifecycle_changed_key";
-
+  // 等待结果
   final Map<String, Completer<Object?>> _pendingResult =
       <String, Completer<Object?>>{};
-
+  // 存放 flutterboost BoostContainer
   final List<BoostContainer> _containers = <BoostContainer>[];
-
+  // 获取容器列表
   List<BoostContainer> get containers => _containers;
 
   /// All interceptors from widget
+  /// 所有widget的拦截器
   List<BoostInterceptor> get interceptors => widget.interceptors;
-
+  // 得到最顶部的BoostContainer
   BoostContainer? get topContainer =>
       _containers.isNotEmpty ? _containers.last : null;
-
+  
+  // 存放 NativeRouterApi 实例
   NativeRouterApi get nativeRouterApi => _nativeRouterApi;
   late NativeRouterApi _nativeRouterApi;
 
+  // 实际上是在Dart端对应的MessageChannel
   BoostFlutterRouterApi get boostFlutterRouterApi => _boostFlutterRouterApi;
   late BoostFlutterRouterApi _boostFlutterRouterApi;
 
   final Set<int> _activePointers = <int>{};
 
   ///Things about method channel
+  /// 监听表
   final Map<String, List<EventListener>> _listenersTable =
       <String, List<EventListener>>{};
-
+  
+  // 保存移除EventListener的回调
   late VoidCallback _lifecycleStateListenerRemover;
 
   /// A list of native page's 'Key' who are opened by dart side
+  /// 一个由 Dart 端打开的native页面的 'Key' 列表
   final List<String> _nativePageKeys = <String>[];
 
   /// To get the last one in the _nativePageKeys list
+  /// 获取_nativePageKeys列表中的最后一个
   String get _topNativePage => _nativePageKeys.last;
 
   @override
   void initState() {
+    // 初始化前，必须先调用下 BoostFlutterBinding
     assert(
         BoostFlutterBinding.instance != null,
         'BoostFlutterBinding is not initialized，'
         'please refer to "class CustomFlutterBinding" in example project');
+    // 初始化和native通讯的类
     _nativeRouterApi = NativeRouterApi();
+    // 初始化接收native 消息的channel
     _boostFlutterRouterApi = BoostFlutterRouterApi(this);
 
     /// create the container matching the initial route
+    /// 场景一个BoostContainer，匹配初始化路由
     final BoostContainer initialContainer =
         _createContainer(PageInfo(pageName: widget.initialRoute));
+    // 添加进容器数组
     _containers.add(initialContainer);
     super.initState();
 
     // Make sure that the widget in the tree that matches [overlayKey]
     // is already mounted, or [refreshOnPush] will fail.
+    // 确保树中的小部件与 [overlayKey] 匹配
+    // 已经挂载，否则 [refreshOnPush] 将会失败。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // try to restore routes from host when hot restart.
       assert(() {
@@ -115,7 +134,9 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       }());
 
       refreshOnPush(initialContainer);
+      //标记flutter端已经可以接收channel通讯
       _boostFlutterRouterApi.isEnvReady = true;
+      // 添加APP生命周期状态监听
       _addAppLifecycleStateEventListener();
       BoostOperationQueue.instance.runPendingOperations();
     });
@@ -183,11 +204,13 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   void _cancelActivePointers() {
     _activePointers.toList().forEach(WidgetsBinding.instance.cancelPointer);
   }
-
+ 
+  // 生成一个UniqueId
   String _createUniqueId(String? pageName) {
     return '${DateTime.now().millisecondsSinceEpoch}_$pageName';
   }
-
+  
+  // 创建BoostContainer的工具函数
   BoostContainer _createContainer(PageInfo pageInfo) {
     pageInfo.uniqueId ??= _createUniqueId(pageInfo.pageName);
     return BoostContainer(
@@ -570,12 +593,17 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
   BoostContainer? _findContainerByUniqueId(String? uniqueId) {
     //Because first page can be removed from container.
+    // 因为第一个页面可能会从容器中移除
     //So we find id in container's PageInfo
+    //所以我们在容器的 PageInfo 中查找 ID
     //If we can't find a container matching this id,
+    //如果找不到匹配此 ID 的容器
     //we will traverse all pages in all containers
+    //我们将遍历所有容器中的所有页面
     //to find the page matching this id,and return its container
-    //
+    //以查找匹配此 ID 的页面，并返回其容器
     //If we can't find any container or page matching this id,we return null
+    // 如果找不到任何匹配此 ID 的容器或页面，我们将返回 null
 
     var result = _containers
         .singleWhereOrNull((element) => element.pageInfo.uniqueId == uniqueId);
@@ -587,7 +615,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return _containers.singleWhereOrNull((element) =>
         element.pages.any((element) => element.pageInfo.uniqueId == uniqueId));
   }
-
+  
+  // 通过uniqueId移除container
   void remove(String? uniqueId) {
     if (uniqueId == null) {
       return;
@@ -656,15 +685,19 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
   ///
   ///Methods below are about Custom events with native side
+  ///以下方法涉及与本地端的自定义事件
   ///
 
   ///Calls when Native send event to flutter(here)
+  /// 当native发送event到flutter侧
   void onReceiveEventFromNative(CommonParams params) {
     //Get the name and args from native
+    // 
     var key = params.key!;
     Map args = params.arguments ?? <String, Object>{};
 
     //Get all of listeners matching this key
+    // 返回key对应的所有监听器
     final listeners = _listenersTable[key];
 
     if (listeners == null) return;
@@ -675,6 +708,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 
   ///Add event listener in flutter side with a [key] and [listener]
+  /// 使用 [key] 和 [listener]在flutter侧添加监听
   VoidCallback addEventListener(String key, EventListener listener) {
     var listeners = _listenersTable[key];
     if (listeners == null) {
@@ -690,11 +724,12 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 
   ///Interal methods below
-
+  /// 返回顶部页面的pageinfo,这是一个内部方法
   PageInfo? getTopPageInfo() {
     return topContainer?.topPage.pageInfo;
   }
-
+  
+  // 返回页面总数，包括container内的子页面也要统计
   int pageSize() {
     var count = 0;
     for (var container in _containers) {
@@ -705,8 +740,10 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
   ///
   ///======== refresh method below ===============
+  /// 以下是刷新方法
   ///
-
+  
+  // 将container添加到Overlay最顶层
   void refreshOnPush(BoostContainer container) {
     ContainerOverlay.instance.refreshSpecificOverlayEntries(
         container, BoostSpecificEntryRefreshMode.add);
@@ -715,7 +752,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       return true;
     }());
   }
-
+  
+  // 将container添加到Overlay移除
   void refreshOnRemove(BoostContainer container) {
     ContainerOverlay.instance.refreshSpecificOverlayEntries(
         container, BoostSpecificEntryRefreshMode.remove);
@@ -724,7 +762,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       return true;
     }());
   }
-
+  
+   // 将container移动到Overlay最顶层
   void refreshOnMoveToTop(BoostContainer container) {
     ContainerOverlay.instance.refreshSpecificOverlayEntries(
         container, BoostSpecificEntryRefreshMode.moveToTop);
@@ -735,11 +774,13 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 }
 
+// bosst 页面，BoostPage 继承 Page，Page 继承 RouteSettings
 // ignore: must_be_immutable
 class BoostPage<T> extends Page<T> {
   BoostPage._({LocalKey? key, required this.pageInfo})
       : super(
             key: key, name: pageInfo.pageName, arguments: pageInfo.arguments) {
+   // 根据 RouteSettings 信息，得到一个Route
     _route = BoostNavigator.instance.routeFactory(this, pageInfo.uniqueId)
         as Route<T>?;
     assert(_route != null,
@@ -756,6 +797,7 @@ class BoostPage<T> extends Page<T> {
   Route<T>? get route => _route;
 
   /// A future that completes when this page is popped.
+  /// 当前page，执行pop时候的future
   Future<T> get popped => _popCompleter.future;
   final Completer<T> _popCompleter = Completer<T>();
 
@@ -775,6 +817,7 @@ class BoostPage<T> extends Page<T> {
   }
 }
 
+// BoostNavigator 观察者
 class BoostNavigatorObserver extends NavigatorObserver {
   BoostNavigatorObserver();
 
@@ -782,6 +825,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     //handle internal route but ignore dialog or abnormal route.
     //otherwise, the normal page will be affected.
+    // 处理内部路由，但是忽略dialog和abnormal路由，否则，常规页面可能会受影响
     if (previousRoute != null && route.settings.name != null) {
       BoostLifecycleBinding.instance.routeDidPush(route, previousRoute);
     }

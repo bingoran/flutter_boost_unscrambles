@@ -13,6 +13,7 @@ import 'flutter_boost_app.dart';
 typedef FlutterBoostRouteFactory = Route<dynamic>? Function(
     RouteSettings settings, String? uniqueId);
 
+// 如果没有拿到注册的Route，就默认给一个空白的 Page Builder
 FlutterBoostRouteFactory routeFactoryWrapper(
     FlutterBoostRouteFactory routeFactory) {
   return (settings, uniqueId) {
@@ -26,19 +27,23 @@ FlutterBoostRouteFactory routeFactoryWrapper(
 }
 
 /// A object that manages a set of pages with a hybrid stack.
+/// 一个管理具有混合堆栈的页面集合的对象
 ///
 class BoostNavigator {
   BoostNavigator._();
 
   /// The singleton for [BoostNavigator]
+  /// 单例BoostNavigator
   static final BoostNavigator _instance = BoostNavigator._();
 
   /// The boost data center
+  /// boost 数据中心
   FlutterBoostAppState? appState;
 
   /// The route table in flutter_boost
   late FlutterBoostRouteFactory _routeFactory;
-
+  
+  /// 在boostAPP初始化的时候，就会设置routeFactory
   set routeFactory(FlutterBoostRouteFactory routeFactory) =>
       _routeFactory = routeFactoryWrapper(routeFactory);
 
@@ -56,6 +61,7 @@ class BoostNavigator {
   }
 
   /// Whether this page with the given [name] is a flutter page
+  /// 给定name的页面是否是flutter页面
   ///
   /// If the name of route can be found in route table then return true,
   /// otherwise return false.
@@ -76,13 +82,16 @@ class BoostNavigator {
     assert(
         appState != null, 'Please check if the engine has been initialized!');
     bool isFlutter = isFlutterPage(name);
+    // flutter页面，切设置了容器内显示
     if (isFlutter && withContainer) {
       // 1. open flutter page with container
+      // 打开一个flutter page，在这个当前的容器上
       // Intercepted in BoostFlutterRouterApi.pushRoute
       return appState!.pushWithResult(name,
           arguments: arguments, withContainer: withContainer, opaque: opaque);
     } else {
       // 2. open native page or flutter page without container
+      // 在这个container之外，打开一个native页面或者flutter页面
       return appState!.pushWithInterceptor(
           name, false /* isFromHost */, isFlutter,
           arguments: arguments, withContainer: withContainer, opaque: opaque);
@@ -155,6 +164,7 @@ class BoostNavigator {
 }
 
 /// The PageInfo use in FlutterBoost ,it is not a public api
+/// PageInfo 只在 FlutterBoost 内部使用，不是一个公共的api
 class PageInfo {
   PageInfo({this.pageName, this.uniqueId, this.arguments, this.withContainer});
 

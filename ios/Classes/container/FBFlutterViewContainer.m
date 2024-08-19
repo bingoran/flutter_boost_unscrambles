@@ -286,6 +286,7 @@ _Pragma("clang diagnostic pop")
 
 - (void)viewWillAppear:(BOOL)animated {
   self.enableSurfaceUpdatedYes = [NSNumber numberWithBool:YES];
+  // 将flutter页面附加到VC上
   [FB_PLUGIN containerWillAppear:self];
 
   // For new page we should attach flutter view in view will appear
@@ -321,6 +322,7 @@ _Pragma("clang diagnostic pop")
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
+  // 如果页面有焦点，关闭焦点
   [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
   [super viewWillDisappear:animated];
 }
