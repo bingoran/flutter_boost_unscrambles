@@ -143,9 +143,13 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 
   ///Setup the AppLifecycleState change event launched from native
+  ///设置从本地启动的 AppLifecycleState 更改事件
   ///Here,the [AppLifecycleState] is depends on the native container's num
+  ///在这里，[AppLifecycleState] 取决于本地容器的数量。
   ///if container num >= 1,the state == [AppLifecycleState.resumed]
+  ///如果容器数量 >= 1，则状态为 [AppLifecycleState.resumed]；
   ///else state == [AppLifecycleState.paused]
+  ///否则，状态为 [AppLifecycleState.paused]。
   void _addAppLifecycleStateEventListener() {
     _lifecycleStateListenerRemover = BoostChannel.instance
         .addEventListener(_appLifecycleChangedKey, (key, arguments) {
@@ -745,6 +749,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   
   // 将container添加到Overlay最顶层
   void refreshOnPush(BoostContainer container) {
+    // 将container插入到Overlay最顶部
     ContainerOverlay.instance.refreshSpecificOverlayEntries(
         container, BoostSpecificEntryRefreshMode.add);
     assert(() {
@@ -817,7 +822,7 @@ class BoostPage<T> extends Page<T> {
   }
 }
 
-// BoostNavigator 观察者
+// BoostNavigator 观察者，就是观察 Navigator 的行为
 class BoostNavigatorObserver extends NavigatorObserver {
   BoostNavigatorObserver();
 

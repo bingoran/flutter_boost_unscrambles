@@ -29,7 +29,8 @@ enum BoostSpecificEntryRefreshMode {
   moveToTop,
 }
 
-// 实体类
+// Overlay 实体类
+// 初始化的时候，将 BoostContainer 用 BoostContainerWidget 进行包裹
 class ContainerOverlayEntry extends OverlayEntry {
   ContainerOverlayEntry(BoostContainer container)
       : containerUniqueId = container.pageInfo.uniqueId,
@@ -109,6 +110,12 @@ class ContainerOverlay {
         // list中不存在实体，添加
         final entry = overlayEntryFactory(container);
         _lastEntries.add(entry);
+
+        // 将给定的条目插入到覆盖层中。
+        // 如果 below 非空，则将条目插入到 below 下面。
+        // 如果 above 非空，则将条目插入到 above 上面。
+        // 否则，条目将插入到最上面。
+        // 同时指定 above 和 below 是错误的。
         overlayState.insert(entry);
         break;
       case BoostSpecificEntryRefreshMode.remove:
