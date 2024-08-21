@@ -68,13 +68,13 @@ class BoostNavigator {
   bool isFlutterPage(String name) =>
       routeFactory(RouteSettings(name: name), null) != null;
 
-  /// Push the page with the given [name] onto the hybrid stack.
-  /// [arguments] is the param you want to pass in next page
-  /// if [withContainer] is true,next route will be with a native container
-  /// (Android Activity / iOS UIViewController)
-  /// if [opaque] is true,the page is opaque (not transparent)
+  /// 将具有给定 [name] 的页面推送到混合栈中。
+  ///  [arguments] 是你想传递到下一个页面的参数
+  ///  如果 [withContainer] 为 true，下一个路由将带有一个原生容器
+  /// Android Activity / iOS UIViewController）。
+  /// 如果 [opaque] 为 true，页面是不透明的（即不透明）。
   ///
-  /// And it will return the result popped by page as a Future<T>
+  /// 此方法将返回一个 Future<T>，其结果是页面弹出的结果
   Future<T> push<T extends Object?>(String name,
       {Map<String, dynamic>? arguments,
       bool withContainer = false,
@@ -93,14 +93,16 @@ class BoostNavigator {
       // 2. open native page or flutter page without container
       // 在这个container之外，打开一个native页面或者flutter页面
       return appState!.pushWithInterceptor(
-          name, false /* isFromHost */, isFlutter,
+          name, 
+          false /* isFromHost */, 
+          isFlutter,
           arguments: arguments, withContainer: withContainer, opaque: opaque);
     }
   }
 
-  /// This api do two things
-  /// 1.Push a new page onto pageStack
-  /// 2.remove(pop) previous page
+  /// 这个 API 做两件事：
+  /// 1. 将新页面推送到 pageStack 中。
+  /// 2. 移除（弹出）之前的页面。
   Future<T> pushReplacement<T extends Object?>(String name,
       {Map<String, dynamic>? arguments, bool withContainer = false}) async {
     final String? id = getTopPageInfo()?.uniqueId;
@@ -116,23 +118,24 @@ class BoostNavigator {
   }
 
   /// Pop the top-most page off the hybrid stack.
+  /// 从混合栈中弹出最顶部的页面
   Future<bool> pop<T extends Object?>([T? result]) async {
     assert(
         appState != null, 'Please check if the engine has been initialized!');
     return await appState!.popWithResult(result);
   }
 
-  /// PopUntil page off the hybrid stack.
+  /// 从混合栈中弹出页面，直到遇到指定的页面
   Future<void> popUntil({String? route, String? uniqueId}) async {
     assert(
         appState != null, 'Please check if the engine has been initialized!');
     return appState!.popUntil(route: route, uniqueId: uniqueId);
   }
 
-  /// Remove the page with the given [uniqueId] from hybrid stack.
+  /// 从混合栈中移除具有给定 [uniqueId] 的页面
   ///
-  /// This API is for backwards compatibility.
-  /// Please use [BoostNavigator.pop] instead.
+  /// 这个 API 用于向后兼容。
+  /// 请改用 [BoostNavigator.pop]。
   Future<bool> remove(String? uniqueId,
       {Map<String, dynamic>? arguments}) async {
     assert(

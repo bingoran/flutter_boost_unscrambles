@@ -96,9 +96,11 @@ class BoostDelegate: NSObject,FlutterBoostDelegate {
                 fatalError("uniqueId is wrong!!!")
             }
             
+            // 如果是最顶部页面，执行pop操作
             if self.navigationController?.topViewController == containerToRemove {
                 self.navigationController?.popViewController(animated: true)
             }else{
+                //如果不是，直接销毁页面
                 containerToRemove?.removeFromParent()
             }
         }

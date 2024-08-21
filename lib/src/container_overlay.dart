@@ -131,6 +131,8 @@ class ContainerOverlay {
           // https://github.com/alibaba/flutter_boost/issues/1056
           // Ensure this frame is refreshed after schedule frame,
           // otherwise the PageState.dispose may not be called
+          //确保该帧在调度帧之后刷新
+          //否则PageState。不能调用Dispose
           SchedulerBinding.instance.scheduleWarmUpFrame();
         }
         break;

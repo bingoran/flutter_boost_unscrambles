@@ -178,6 +178,7 @@ _Pragma("clang diagnostic pop")
   self.uniqueId = [[NSUUID UUID] UUIDString];
 }
 
+//
 - (void)didMoveToParentViewController:(UIViewController *)parent {
   if (!parent) {
     //当VC被移出parent时，就通知flutter层销毁page
@@ -187,6 +188,7 @@ _Pragma("clang diagnostic pop")
   [super didMoveToParentViewController:parent];
 }
 
+// 关闭VC；在viewDidDisappear调用后会回调
 - (void)dismissViewControllerAnimated:(BOOL)flag
                            completion:(void (^)(void))completion {
   [super dismissViewControllerAnimated:flag

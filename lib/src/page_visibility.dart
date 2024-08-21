@@ -110,6 +110,7 @@ class PageVisibilityBinding {
     }
 
     ///just dispatch for global observers
+    ///仅仅触发全局观察者onPagePush事件
     dispatchGlobalPagePushEvent(route);
   }
   

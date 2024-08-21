@@ -10,6 +10,7 @@ import 'logger.dart';
 import 'page_visibility.dart';
 
 /// Observer for Container
+/// Container 观察者
 mixin BoostLifecycleObserver {
   void onContainerDidPush(
       BoostContainer container, BoostContainer? previousContainer) {}
@@ -30,13 +31,13 @@ mixin BoostLifecycleObserver {
   void onAppDidEnterBackground(BoostContainer container) {}
 }
 
-// boost 什么周期绑定
+// boost 生命周期绑定
 class BoostLifecycleBinding {
   BoostLifecycleBinding._();
 
   static final BoostLifecycleBinding instance = BoostLifecycleBinding._();
   
-  // 观察列表页
+  // 观察列表
   final List<BoostLifecycleObserver> _observerList = <BoostLifecycleObserver>[];
   // navigator 观察列表
   List<NavigatorObserver> navigatorObserverList = <NavigatorObserver>[];
@@ -74,9 +75,11 @@ class BoostLifecycleBinding {
   void containerDidPush(
       BoostContainer container, BoostContainer? previousContainer) {
     Logger.log('boost_lifecycle: BoostLifecycleBinding.containerDidPush');
-    //
+    // 仅触发全局观察者onPagePush事件
     PageVisibilityBinding.instance
         .dispatchPagePushEvent(container.topPage.route);
+    
+    // 触发 BoostContainer 观察者 onContainerDidPush 事件
     if (_observerList.isNotEmpty) {
       for (BoostLifecycleObserver observer in _observerList) {
         observer.onContainerDidPush(container, previousContainer);

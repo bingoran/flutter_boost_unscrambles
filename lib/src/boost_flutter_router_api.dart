@@ -30,7 +30,8 @@ class BoostFlutterRouterApi extends FlutterRouterApi {
   void pushRoute(CommonParams param) {
     _addInOperationQueueOrExcute(() {
       appState.pushWithInterceptor(
-          param.pageName, true /* isFromHost */, true /* isFlutterPage */,
+          param.pageName, true /* isFromHost */, 
+          true /* isFlutterPage */,
           withContainer: true,
           uniqueId: param.uniqueId,
           arguments: Map<String, dynamic>.from(
@@ -95,6 +96,7 @@ class BoostFlutterRouterApi extends FlutterRouterApi {
   /// If [isEnvReady] is false, add [operation] into pending queue,
   /// or [operation] will execute immediately.
   void _addInOperationQueueOrExcute(Function operation) {
+    // 当flutter boost环境还没准备好之前，将所有路由操作先存放在操作队列中
     if (!isEnvReady) {
       BoostOperationQueue.instance.addPendingOperation(operation);
     } else {

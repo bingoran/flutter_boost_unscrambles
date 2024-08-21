@@ -76,6 +76,7 @@
     SEL selector = NSSelectorFromString(@"registerWithRegistry:");
     if (clazz && selector && self.engine) {
       if ([clazz respondsToSelector:selector]) {
+        // 这里以这个engine为入参，是因为engine实现了FlutterPluginRegistry协议
         ((void (*)(id, SEL, NSObject<FlutterPluginRegistry>*registry))[clazz methodForSelector:selector])(clazz, selector, self.engine);
       }
     }

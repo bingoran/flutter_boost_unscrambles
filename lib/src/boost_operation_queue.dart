@@ -6,7 +6,7 @@ import 'dart:collection';
 
 /// The operation queue for flutter boost to store operation and execute the opeation
 /// This queue is to solve issue:https://github.com/alibaba/flutter_boost/issues/1414
-/// boost 的等待对列
+/// boost 的操作队列
 class BoostOperationQueue {
   static BoostOperationQueue instance = BoostOperationQueue._();
 
@@ -16,11 +16,13 @@ class BoostOperationQueue {
   final Queue<Function> _queue = DoubleLinkedQueue<Function>();
 
   /// Add an [operation] in queue
+  /// 在对列中添加操作
   void addPendingOperation(Function operation) {
     _queue.add(operation);
   }
 
   /// Run all operation in queue
+  /// 依次执行所有对列操作
   void runPendingOperations() {
     while (_queue.isNotEmpty) {
       final Function operation = _queue.removeFirst();

@@ -138,6 +138,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       _boostFlutterRouterApi.isEnvReady = true;
       // 添加APP生命周期状态监听
       _addAppLifecycleStateEventListener();
+      // 执行对列中的操作
       BoostOperationQueue.instance.runPendingOperations();
     });
   }
@@ -220,7 +221,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return BoostContainer(
         key: ValueKey<String?>(pageInfo.uniqueId), pageInfo: pageInfo);
   }
-
+  
+  // 保存堆栈，用于热启动
   Future<void> _saveStackForHotRestart() async {
     final stack = StackInfo();
     stack.ids = <String?>[];
@@ -243,25 +245,32 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     await nativeRouterApi.saveStackToHost(stack);
     Logger.log('_saveStackForHotRestart, ${stack.ids}, ${stack.containers}');
   }
-
+  
+  // 热更新恢复页面堆栈
   Future<void> _restoreStackForHotRestart() async {
+    // 获取到native侧保存的堆栈
     final stack = await nativeRouterApi.getStackFromHost();
     final List<String?>? ids = stack.ids;
     final Map<String?, FlutterContainer?>? containers = stack.containers;
     if (ids != null && containers != null) {
       for (var id in ids) {
         var withContainer = true;
+        // container不为空
         final FlutterContainer? container = containers[id];
+        // container 和内部 page 都不为空
         if (container != null && container.pages != null) {
           for (var page in container.pages as List<FlutterPage?>) {
+            // 拿到page
             if (page != null && page.arguments != null) {
+              // 将有效的参数，重新组装到args中
               Map<String, Object> args = <String, Object>{};
               for (var key in page.arguments!.keys) {
                 if (key != null && page.arguments![key] != null) {
                   args[key] = page.arguments![key]!;
                 }
               }
-
+              
+              // 首先是push一个Boost Container处理，然后之后的page，都是附加到这个Container之上
               withContainer
                   ? pushContainer(page.pageName,
                       uniqueId: page.uniqueId, arguments: args)
@@ -275,7 +284,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     }
     Logger.log('_restoreStackForHotRestart, $ids, $containers');
   }
-
+  
+  // push 拦截器
   Future<T> pushWithInterceptor<T extends Object?>(
       String? name, bool isFromHost, bool isFlutterPage,
       {Map<String, dynamic>? arguments,
@@ -283,14 +293,18 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       bool? withContainer,
       bool opaque = true}) {
     Logger.log('pushWithInterceptor, uniqueId=$uniqueId, name=$name');
+    // push 参数
     var pushOption = BoostInterceptorOption(name,
         uniqueId: uniqueId,
         isFromHost: isFromHost,
         arguments: arguments ?? <String, dynamic>{});
+    
+    // 执行拦截器
     InterceptorState<BoostInterceptorOption>? state =
         InterceptorState<BoostInterceptorOption>(pushOption);
     for (var interceptor in interceptors) {
       final pushHandler = PushInterceptorHandler();
+      // 即将push的一些操作
       interceptor.onPrePush(state!.data, pushHandler);
 
       // user resolve or do nothing
@@ -301,15 +315,21 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       }
       state = pushHandler.state as InterceptorState<BoostInterceptorOption>?;
     }
-
+    
+    // 如果没有拦截，则进行正常的push操作
     if (state?.type == InterceptorResultType.next) {
       pushOption = state!.data;
+      // isFromHost 如果是native发起打开，为true，如果是flutter发起打开，是false
       if (isFromHost) {
+        // 新增一个contianer在最上面
         pushContainer(name,
             uniqueId: pushOption.uniqueId,
             isFromHost: isFromHost,
             arguments: pushOption.arguments);
+        // 自己新增的
+        return Future<T>.value();
       } else {
+        // 如果是flutter页面（注册的页面中能找到页面）
         if (isFlutterPage) {
           return pushWithResult(pushOption.name,
               uniqueId: pushOption.uniqueId,
@@ -317,10 +337,12 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
               withContainer: withContainer!,
               opaque: opaque);
         } else {
+          // 打开的是一个native页面
           final params = CommonParams()
             ..pageName = pushOption.name
             ..arguments = pushOption.arguments;
           nativeRouterApi.pushNativeRoute(params);
+          // 等待页面返回结果
           return pendNativeResult(pushOption.name);
         }
       }
@@ -328,7 +350,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
     return Future<T>.value();
   }
-
+  
+  // native侧新增一个容器或者本地contiainer附加一个容器
   Future<T> pushWithResult<T extends Object?>(String? pageName,
       {String? uniqueId,
       Map<String, dynamic>? arguments,
@@ -336,6 +359,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       bool opaque = true}) {
     uniqueId ??= _createUniqueId(pageName);
     if (withContainer) {
+      // flutter 端开一个新naitve FlutterVC容器加载页面
       final completer = Completer<T>();
       final params = CommonParams()
         ..pageName = pageName
@@ -346,10 +370,12 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       _pendingResult[uniqueId] = completer;
       return completer.future;
     } else {
+      // 在当前的顶层container上附加一个新页面
       return pushPage(pageName, uniqueId: uniqueId, arguments: arguments);
     }
   }
-
+  
+  //在container上附加page
   Future<T> pushPage<T extends Object?>(String? pageName,
       {String? uniqueId, Map<String, dynamic>? arguments}) {
     Logger.log('pushPage, uniqueId=$uniqueId, name=$pageName,'
@@ -364,80 +390,109 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     _pushFinish(pageName, uniqueId: uniqueId, arguments: arguments);
     return result!.then((value) => value as T);
   }
-
+  
+  // push 到新的 container
   void pushContainer(String? pageName,
       {String? uniqueId,
       bool isFromHost = false,
       Map<String, dynamic>? arguments}) {
+    // 取消页面上当前的点击事件
     _cancelActivePointers();
+    // 看看_containers里有没有已经存在的page
     final existed = _findContainerByUniqueId(uniqueId);
     if (existed != null) {
+      // 如果存在，而且如果不在最上层，就把找到的这个container移动到最上层
       if (topContainer?.pageInfo.uniqueId != uniqueId) {
         _containers.remove(existed);
         _containers.add(existed);
 
         //move the overlayEntry which matches this existing container to the top
+        //页面层面操作移动到最顶层
         refreshOnMoveToTop(existed);
       }
     } else {
+      // 如果不存在
       final pageInfo = PageInfo(
           pageName: pageName,
           uniqueId: uniqueId ?? _createUniqueId(pageName),
           arguments: arguments,
           withContainer: true);
+      // 创建一个contaier
       final container = _createContainer(pageInfo);
+      // 当前最顶部的container赋值为前一个container
       final previousContainer = topContainer;
       _containers.add(container);
+      // 1、触发container的DidPush事件
+      // 2、触发全局观察者onPagePush事件
       BoostLifecycleBinding.instance
           .containerDidPush(container, previousContainer);
 
       // Add a new overlay entry with this container
+      // 在container上新增一个overlay entry
       refreshOnPush(container);
     }
-
+    // 执行拦截器
     _pushFinish(pageName,
         uniqueId: uniqueId, isFromHost: isFromHost, arguments: arguments);
     Logger.log('pushContainer, uniqueId=$uniqueId, existed=$existed,'
         ' arguments:$arguments, $_containers');
   }
-
+  
+  // push 完成后，执行拦截器
   void _pushFinish(String? pageName,
       {String? uniqueId,
       bool isFromHost = false,
       Map<String, dynamic>? arguments}) {
+    // 生成拦截参数
     var pushOption = BoostInterceptorOption(pageName,
         uniqueId: uniqueId,
         isFromHost: isFromHost,
         arguments: arguments ?? <String, dynamic>{});
+    
+    // 拦截器State
     InterceptorState<BoostInterceptorOption>? state =
         InterceptorState<BoostInterceptorOption>(pushOption);
+
+    // 遍历拦截器
     for (var interceptor in interceptors) {
       final pushHandler = PushInterceptorHandler();
+      // 拦截器处理完后，
       interceptor.onPostPush(state!.data, pushHandler);
       // user resolve or do nothing
       if (pushHandler.state?.type != InterceptorResultType.next) {
         break;
       }
+      // 将上一个拦截器处理的数据继续向下一个拦截器传递
       state = pushHandler.state as InterceptorState<BoostInterceptorOption>?;
     }
   }
-
+  
+  // 从混合栈中弹出最顶部的页面，并返回弹出结果 true ｜ false
   Future<bool> popWithResult<T extends Object?>([T? result]) async {
     return await pop(result: result);
   }
-
+  
+  //从混合栈移除给定uniqueId的页面
   Future<bool> removeWithResult(
       [String? uniqueId, Map<String, dynamic>? result]) async {
     return await pop(uniqueId: uniqueId, result: result);
   }
-
+  
+  //pop 页面，直到
   void popUntil({String? route, String? uniqueId}) async {
+    // 目标Container
     BoostContainer? targetContainer;
+    // 目标page
     BoostPage? targetPage;
+    // _containers 数量
     int popUntilIndex = _containers.length;
+    // 如果uniqueId不为空
     if (uniqueId != null) {
+      // 倒序遍历_containers
       for (int index = _containers.length - 1; index >= 0; index--) {
+        // 遍历container中的page
         for (BoostPage page in _containers[index].pages) {
+          // 找到了对应的container
           if (uniqueId == page.pageInfo.uniqueId ||
               uniqueId == _containers[index].pageInfo.uniqueId) {
             //uniqueId优先级更高，优先匹配
@@ -446,17 +501,22 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
             break;
           }
         }
+        // 找到了目标container,记录下标
         if (targetContainer != null) {
           popUntilIndex = index;
           break;
         }
       }
     }
-
+    
+    // 目标container为空，但是 route（string）不为空
     if (targetContainer == null && route != null) {
+      // 倒序遍历
       for (int index = _containers.length - 1; index >= 0; index--) {
+        // 继续遍历container中的page
         for (BoostPage page in _containers[index].pages) {
           if (route == page.name) {
+            // 找到了目标container
             targetContainer = _containers[index];
             targetPage = page;
             break;
@@ -468,11 +528,15 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
         }
       }
     }
-
+    
+    // 目标Container不为空 并且，并且目标Container不是最顶部的Container
     if (targetContainer != null && targetContainer != topContainer) {
       /// _containers item index would change when call 'nativeRouterApi.popRoute' method with sync.
+      /// 当调用 nativeRouterApi.popRoute 方法进行同步操作时，_containers 的项索引会发生变化。
       /// clone _containers keep original item index.
+      /// clone _containers 可以保持原始项的索引
       List<BoostContainer> containersTemp = [..._containers];
+      // 倒序遍历，直到到达目标下标为止
       for (int index = containersTemp.length - 1;
           index > popUntilIndex;
           index--) {
@@ -481,33 +545,44 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
           ..pageName = container.pageInfo.pageName
           ..uniqueId = container.pageInfo.uniqueId
           ..arguments = {"animated": false};
+        // native侧执行pop
         await nativeRouterApi.popRoute(params);
       }
-
+      
+      // 目标Container最顶部的page不等于目标page
       if (targetContainer.topPage != targetPage) {
+        // Container执行popUntil，直到targetPage
         Future<void>.delayed(
             const Duration(milliseconds: 50),
             () => targetContainer?.navigator
                 ?.popUntil(ModalRoute.withName(targetPage!.name!)));
       }
     } else {
+      // 顶部Container执行popUntil，直到targetPage
       topContainer?.navigator?.popUntil(ModalRoute.withName(targetPage!.name!));
     }
   }
-
+  
+  // pop 页面
   Future<bool> pop(
       {String? uniqueId, Object? result, bool onBackPressed = false}) async {
+    // 没有顶部的 container 直接返回false
     if (topContainer == null) return false;
     BoostContainer? container;
+    // 如果有指定的uniqueId，则移除指定的uniqueId
     if (uniqueId != null) {
+      // 找到对应的contianer
       container = _findContainerByUniqueId(uniqueId);
       if (container == null) {
         Logger.error('uniqueId=$uniqueId not found');
         return false;
       }
+      // 如果移除的页面不是顶部页面
       if (container != topContainer) {
+        //执行页面回调
         _completePendingResultIfNeeded(container.pageInfo.uniqueId,
             result: result);
+        // native 执行页面的 pop（页面） 或者 dismiss（模态）
         await _removeContainer(container);
         return true;
       }
@@ -520,13 +595,19 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     // 2.If uniqueId is topPage's uniqueId, so we navigator?.maybePop();
     // 3.If uniqueId is not topPage's uniqueId, so we will remove an existing
     // page in container.
+    // 1. 如果 uniqueId == null，表示我们只是调用 BoostNavigator.pop()，所以调用 navigator?.maybePop();
+    // 2. 如果 uniqueId 是最上面的页面的 uniqueId，那么我们调用 navigator?.maybePop();
+    // 3. 如果 uniqueId 不是最上面的页面的 uniqueId，那么我们将移除容器中的一个现有页面。
     String? targetPage = uniqueId;
     final String topPage = container!.pages.last.pageInfo.uniqueId!;
+    // 如果uniqueId为空，或者移除的就是最顶部的页面
     if (uniqueId == null || uniqueId == topPage) {
+      // handled表示为当前是否可以执行返回
       final handled = onBackPressed
           ? await _performBackPressed(container, result)
           : container.navigator?.canPop();
       if (handled != null) {
+        // 如果handled返回的是false
         if (!handled) {
           assert(container.pageInfo.withContainer!);
           final params = CommonParams()
@@ -535,43 +616,55 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
             ..arguments = ((result is Map<String, dynamic>)
                 ? result
                 : <String, dynamic>{});
+          // native侧执行页面pop
           await nativeRouterApi.popRoute(params);
+          // 目标页面,如果不是传入id对应的页面，就是顶部页面
           targetPage = targetPage ?? topPage;
         } else {
+          // 不是点击返回
           if (!onBackPressed) {
+            // 执行pop操作
             container.navigator!.pop(result);
           }
 
           if (topPage != container.pages.last.pageInfo.uniqueId!) {
             // 1. Popped out pages pushed by FlutterBoost, including internal routes
+            // 1. 弹出由 FlutterBoost push的页面，包括内部路由；如果不是传入id对应的页面，就是顶部页面
             targetPage = targetPage ?? topPage;
           } else {
             // 2. Popped out route pushed by `Navigator`, for example, showDialog
+            // 2. 弹出由 Navigator push的路由，例如，showDialog
             assert(targetPage == null);
           }
         }
       }
     } else {
+      // 移除一个内部page
       final page = container.pages
           .singleWhereOrNull((entry) => entry.pageInfo.uniqueId == uniqueId);
       container.removePage(page);
     }
-
+    
+    //执行页面回调
     _completePendingResultIfNeeded(targetPage, result: result);
     Logger.log('pop container, uniqueId=$uniqueId, result:$result, $container');
     return true;
   }
-
+  
+  //执行自定义返回操作
   Future<bool> _performBackPressed(
       BoostContainer container, Object? result) async {
+    // 如果当前
     if (container.backPressedHandler != null) {
       container.backPressedHandler!.call();
       return true;
     } else {
+      //否则，执行当前navigator的maybePop方法，返回当前页面是否可以执行pop操作
       return (await container.navigator?.maybePop(result))!;
     }
   }
-
+  
+  // 移除当前容器
   Future<void> _removeContainer(BoostContainer container) async {
     if (container.pageInfo.withContainer!) {
       Logger.log('_removeContainer ,  uniqueId=${container.pageInfo.uniqueId}');
@@ -582,13 +675,15 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       return await _nativeRouterApi.popRoute(params);
     }
   }
-
+  
+  // 回到前台
   void onForeground() {
     if (topContainer != null) {
       BoostLifecycleBinding.instance.appDidEnterForeground(topContainer!);
     }
   }
 
+  // 退到后台
   void onBackground() {
     if (topContainer != null) {
       BoostLifecycleBinding.instance.appDidEnterBackground(topContainer!);
@@ -608,14 +703,16 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     //以查找匹配此 ID 的页面，并返回其容器
     //If we can't find any container or page matching this id,we return null
     // 如果找不到任何匹配此 ID 的容器或页面，我们将返回 null
-
+    
+    // 先containers层级找一遍，看看有没有对于的BoostContainer
     var result = _containers
         .singleWhereOrNull((element) => element.pageInfo.uniqueId == uniqueId);
 
     if (result != null) {
       return result;
     }
-
+    
+    // 再看看container对于的page层面有没有对应的页面
     return _containers.singleWhereOrNull((element) =>
         element.pages.any((element) => element.pageInfo.uniqueId == uniqueId));
   }
@@ -642,7 +739,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     }
     Logger.log('remove,  uniqueId=$uniqueId, $_containers');
   }
-
+  
+  // 等待native页面结果
   Future<T> pendNativeResult<T extends Object?>(String? pageName) {
     final completer = Completer<T>();
     final initiatorPage = topContainer?.topPage.pageInfo.uniqueId;
@@ -655,6 +753,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
   /// In boost's native side, should avoid calling this method when an outer_route's flutter page
   /// pops back to previous outer_route's flutter page.
+  /// 在 Boost 的原生端，应该避免在外部路由的 Flutter 页面弹回到之前的外部路由的 Flutter 页面时调用此方法。
   void onNativeResult(CommonParams params) {
     final key = _topNativePage;
     _nativePageKeys.remove(key);
@@ -664,7 +763,8 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     }
     Logger.log('onNativeResult, key:$key, result:${params.arguments}');
   }
-
+  
+  // 执行flutter侧的页面push时候的等待回调
   void _completePendingResultIfNeeded<T extends Object?>(String? uniqueId,
       {T? result}) {
     if (uniqueId != null && _pendingResult.containsKey(uniqueId)) {

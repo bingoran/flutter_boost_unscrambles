@@ -225,7 +225,8 @@ class NativeRouterApi {
       return;
     }
   }
-
+  
+  // native侧执行页面pop
   Future<void> popRoute(CommonParams arg_param) async {
     final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
         'dev.flutter.pigeon.NativeRouterApi.popRoute', codec, binaryMessenger: _binaryMessenger);

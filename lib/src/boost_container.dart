@@ -56,7 +56,7 @@ class BoostContainer extends ChangeNotifier {
   final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
 
   /// intercept page's backPressed event
-  ///拦截页面的backPressed事件
+  ///拦截页面的backPressed事件,自定义返回操作
   VoidCallback? backPressedHandler;
 
   /// add a [BoostPage] in this container and return its future result
@@ -182,6 +182,7 @@ class BoostContainerState extends State<BoostContainerWidget> {
           onPopPage: (route, result) {
             if (route.didPop(result)) {
               assert(route.settings is BoostPage);
+              // 执行页面的移除操作
               _updatePagesList(route.settings as BoostPage, result);
               return true;
             }
@@ -219,7 +220,7 @@ class NavigatorExt extends Navigator {
 
 class NavigatorExtState extends NavigatorState {
 
-  // 通过 routeName push
+  // 通过 routeName push 跳新页面
   @override
   Future<T?> pushNamed<T extends Object?>(String routeName,
       {Object? arguments}) {
