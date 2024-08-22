@@ -7,6 +7,9 @@ import 'package:flutter/widgets.dart';
 /// Widget with caching function, solve：
 ///1.Page rebuild caused by overlay；
 ///2.Page rebuild caused by navigator2.0；
+/// 带有缓存功能的小部件，用于解决：
+///1. 由于覆盖层导致的页面重建；
+///2. 由于 Navigator 2.0 导致的页面重建。
 class BoostCacheWidget extends StatefulWidget {
   final String uniqueId;
   final WidgetBuilder builder;

@@ -188,7 +188,7 @@ _Pragma("clang diagnostic pop")
   [super didMoveToParentViewController:parent];
 }
 
-// 关闭VC；在viewDidDisappear调用后会回调
+// 关闭模态VC；在viewDidDisappear调用后会回调
 - (void)dismissViewControllerAnimated:(BOOL)flag
                            completion:(void (^)(void))completion {
   [super dismissViewControllerAnimated:flag
@@ -210,6 +210,7 @@ _Pragma("clang diagnostic pop")
   _leftEdgeGesture.delegate = nil;
 }
 
+//通知Container即将销毁
 - (void)notifyWillDealloc {
   [FB_PLUGIN containerDestroyed:self];
 }
@@ -257,6 +258,7 @@ _Pragma("clang diagnostic pop")
   if (self.engine.viewController == self) {
     // need to call [surfaceUpdated:NO] to detach the view controller's ref from
     // interal engine platformViewController,or dealloc will not be called after controller close.
+    //需要调用 [surfaceUpdated] 以从内部引擎 platformViewController 中分离视图控制器的引用，否则在控制器关闭后不会调用 dealloc。
     // detail:https://github.com/flutter/engine/blob/07e2520d5d8f837da439317adab4ecd7bff2f72d/shell/platform/darwin/ios/framework/Source/FlutterViewController.mm#L529
     [self surfaceUpdated:NO];
 

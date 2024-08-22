@@ -78,6 +78,7 @@
   }];
 }
 
+//container销毁当前VC
 - (void)containerDestroyed:(id<FBFlutterContainer>)vc {
   FBCommonParams* params =[[FBCommonParams alloc] init];
   params.pageName = vc.name;
@@ -88,6 +89,7 @@
                          }];
   [self.containerManager removeContainerByUniqueId:vc.uniqueIDString];
   if (self.containerManager.containerSize == 0) {
+    // 生命周期暂停
     [FBLifecycle pause];
   }
 }

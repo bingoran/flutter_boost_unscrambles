@@ -57,7 +57,8 @@ class BoostFlutterRouterApi extends FlutterRouterApi {
 
   @override
   void onBackground(CommonParams param) => appState.onBackground();
-
+  
+  // 页面销毁的时候，执行container的销毁
   @override
   void removeRoute(CommonParams param) {
     _addInOperationQueueOrExcute(() {

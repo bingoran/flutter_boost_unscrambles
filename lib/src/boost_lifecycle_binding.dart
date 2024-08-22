@@ -93,11 +93,15 @@ class BoostLifecycleBinding {
 
     // When container pop,remove the id from set to avoid
     // this id still remain in the set
+    // 当容器弹出时，从集合中移除该 ID，以避免该 ID 仍然保留在集合
     final id = container.pageInfo.uniqueId;
     _hasShownPageIds.remove(id);
 
+    //全局分发PagePop事件
     PageVisibilityBinding.instance
         .dispatchPagePopEvent(container.topPage.route);
+    
+    // 观察列表分发ContainerDidPop生命周期方法调用
     if (_observerList.isNotEmpty) {
       for (BoostLifecycleObserver observer in _observerList) {
         observer.onContainerDidPop(container, previousContainer);
@@ -108,6 +112,8 @@ class BoostLifecycleBinding {
   void containerDidShow(BoostContainer container) {
     ///When this container show,we check the nums of page in this container,
     ///And change the pop gesture in this container
+    ///当这个容器显示时，我们检查这个容器中的页面数目;
+    ///更改容器的弹出手势
     if (container.pages.length >= 2) {
       BoostChannel.instance
           .disablePopGesture(containerId: container.pageInfo.uniqueId!);
@@ -127,6 +133,10 @@ class BoostLifecycleBinding {
       // So we should dispatch event using
       // PageVisibilityBinding.dispatchPageShowEventOnPageShowFirstTime
       // to ensure the page will receive callback
+      // 这种情况表示这是这个容器第一次显示。
+      // 因此，我们应该使用
+      // PageVisibilityBinding.dispatchPageShowEventOnPageShowFirstTime
+      // 以确保页面会接收到回调。
       PageVisibilityBinding.instance
           .dispatchPageShowEventOnPageShowFirstTime(container.topPage.route);
     } else {

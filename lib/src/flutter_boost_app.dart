@@ -722,13 +722,17 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     if (uniqueId == null) {
       return;
     }
-
+    
+    // 如果有匹配的container
     final container = _findContainerByUniqueId(uniqueId);
     if (container != null) {
+      // 移除_containers里的container
       _containers.remove(container);
+      // DidPop 事件分发
       BoostLifecycleBinding.instance.containerDidPop(container, topContainer);
 
       //remove the overlayEntry matching this container
+      //移除匹配的overlayEntry
       refreshOnRemove(container);
     } else {
       for (var container in _containers) {
